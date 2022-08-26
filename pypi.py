@@ -78,6 +78,41 @@ def python_requirements_dot_text_analysis(filepath, no_deps):
     for url in github_urls:
         print(url)
 
+def python_from_list(all_pkgs):
+    # retrieve github urls for unique pypi packages and store date
+    # on any packages without a PyPI entry or a gitHub
+    github_urls = []
+    pkgs_without_pypi_data = []
+    pkgs_without_githubs = []
+    for pkg in all_pkgs:
+
+        pypi_json = get_pypi_data_json(pkg)
+        if not pypi_json:
+            pkgs_without_pypi_data.append(pkg)
+
+        github_url = get_github_url_from_pypi_json(pypi_json)
+        if pypi_json and not github_url:
+            pkgs_without_githubs.append(pkg)
+
+        if github_url:
+            github_urls.append(github_url)
+
+    # print all results, making sure to print any packages without
+    # a PyPI entry or GitHub first to ensure an informed user
+    if pkgs_without_pypi_data:
+        print("\nWARNING: Some of these packages are not on PyPI:")
+        for pkg in pkgs_without_pypi_data:
+            print(pkg)
+        print("")
+
+    if pkgs_without_githubs:
+        print("\nWARNING: Some of the packages found on PyPI do not have GitHubs:")
+        for pkg in pkgs_without_githubs:
+            print(pkg)
+        print("")
+
+    for url in github_urls:
+        print(url)
 
 def parse_requirements_dot_text(filepath):
     """Convert requirements.txt to list of package names
@@ -165,7 +200,7 @@ def get_github_url_from_pypi_json(pypi_pkg_json):
     potential_github_fields = []
 
     # check home page url
-    if "github.com" in pypi_pkg_json["info"]["home_page"]:
+    if pypi_pkg_json["info"]["home_page"] and "github.com" in pypi_pkg_json["info"]["home_page"]:
         potential_github_fields.append(pypi_pkg_json["info"]["home_page"])
 
     # check project url fields if url fields present
@@ -191,3 +226,11 @@ def get_github_url_from_pypi_json(pypi_pkg_json):
         github_page = clean_github_link(github_page)
 
     return github_page
+
+if __name__ == '__main__':
+    all_pkgs = []
+    #with open("missing_translation.txt", 'r') as f:
+    with open("missing_translation_popular.txt", 'r') as f:
+        for line in f.readlines():
+            all_pkgs.append(line.strip())
+    python_from_list(all_pkgs)
